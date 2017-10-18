@@ -1,9 +1,9 @@
 # https://raw.githubusercontent.com/yaringal/BayesianRNN/master/Example/callbacks.py
 
 import numpy as np
-from keras.callbacks import Callback
 from keras import backend as K
-from keras import models
+from keras.callbacks import Callback
+
 
 def standardize_X(X):
     if type(X) == list:
@@ -51,7 +51,7 @@ class ModelTest(Callback):
         self._predict_stochastic = None
 
     def predict_stochastic(self, X, batch_size=128, verbose=0):
-        '''Generate output predictions for the input samples
+        """Generate output predictions for the input samples
         batch by batch, using stochastic forward passes. If
         dropout is used at training, during prediction network
         units will be dropped at random as well. This procedure
@@ -68,7 +68,7 @@ class ModelTest(Callback):
         # References
             - [Dropout: A simple way to prevent neural networks from overfitting](http://jmlr.org/papers/v15/srivastava14a.html)
             - [Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning](http://arxiv.org/abs/1506.02142)
-        '''
+        """
         X = standardize_X(X)
         if self._predict_stochastic is None: # we only get self.model after init
             self._predict_stochastic = K.function([self.model.inputs[0]], [self.model.outputs[0]],
@@ -82,7 +82,7 @@ class ModelTest(Callback):
         model_output = self.model.predict(self.Xt, batch_size=self.batch_size,
                                           verbose=self.verbose)
         MC_model_output = []
-        for _ in xrange(self.T):
+        for _ in range(self.T):
             MC_model_output += [self.predict_stochastic(self.Xt,
                                                    batch_size=self.batch_size,
                                                    verbose=self.verbose)]
