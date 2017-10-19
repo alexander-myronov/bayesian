@@ -1,6 +1,5 @@
 from warnings import warn
 
-import numpy as np
 from keras import backend as K
 from keras.layers import Dropout, Dense
 from keras.models import Model
