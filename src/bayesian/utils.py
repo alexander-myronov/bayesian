@@ -2,14 +2,14 @@ import argparse
 import time
 from functools import partial
 
+import numpy as np
 from keras import Input
 from keras.callbacks import Callback
-import numpy as np
 from keras.layers import Dropout, Dense
 from keras.regularizers import l2
 
-from bayesian.bayesian_dropout_model import BayesianDropoutModel
-from bayesian.metrics import bayesian_std, predictive_entropy
+from src.bayesian.bayesian_dropout_model import BayesianDropoutModel
+from src.bayesian.metrics import bayesian_std, predictive_entropy
 
 
 def standardize(X):

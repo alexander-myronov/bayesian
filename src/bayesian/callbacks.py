@@ -1,11 +1,9 @@
 # https://raw.githubusercontent.com/yaringal/BayesianRNN/master/Example/callbacks.py
 
 import numpy as np
-from keras import backend as K
 from keras.callbacks import Callback
 
-from bayesian.bayesian_dropout_model import BayesianDropoutModel
-from bayesian.utils import monkeypatch_model_predict_stochastic
+from src.bayesian.utils import monkeypatch_model_predict_stochastic
 
 
 class ModelTest(Callback):

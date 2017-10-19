@@ -1,15 +1,13 @@
+import numpy as np
 from keras.engine import Model
 from keras.layers import Dense
 from keras.optimizers import SGD
 from keras.regularizers import l2
-
-from bayesian.bayesian_dropout_model import BayesianDropoutModel
 from matplotlib import pyplot as plt
-import numpy as np
 
-from bayesian.callbacks import ModelTest
-from bayesian.utils import DrawUnivariateEpistemicUncertaintyCallback
-from bayesian.utils import univariate_function_example, univariate_regression_dataset, build_net_architecture, \
+from src.bayesian.utils import DrawUnivariateEpistemicUncertaintyCallback
+from src.bayesian.callbacks import ModelTest
+from src.bayesian.utils import univariate_function_example, univariate_regression_dataset, build_net_architecture, \
     create_arg_parser
 
 

@@ -1,21 +1,18 @@
+import numpy as np
 from keras.datasets import mnist
 from keras.layers import Dense, Concatenate, Activation
 from keras.metrics import categorical_accuracy
-from keras.optimizers import SGD
 from keras.regularizers import l2
 from keras.utils import to_categorical
-
-from bayesian.bayesian_dropout_model import BayesianDropoutModel
 from matplotlib import pyplot as plt
-import numpy as np
 
-from bayesian.callbacks import ModelTest
-from bayesian.metrics import predictive_entropy
-from bayesian.objectives import bayesian_mean_squared_error, bayesian_categorical_crossentropy_original
-from bayesian.utils import DrawUnivariateEpistemicAleatoricUncertaintyCallback, \
-    classification_prediction_with_aleatoric_uncertainty, classification_MC_prediction_with_epistemic_uncertainty
-from bayesian.utils import univariate_regression_dataset, build_net_architecture, \
+from src.bayesian.bayesian_dropout_model import BayesianDropoutModel
+from src.bayesian.callbacks import ModelTest
+from src.bayesian.objectives import bayesian_categorical_crossentropy_original
+from src.bayesian.utils import build_net_architecture, \
     create_arg_parser, remove_options
+from src.bayesian.utils import classification_prediction_with_aleatoric_uncertainty, \
+    classification_MC_prediction_with_epistemic_uncertainty
 
 
 def create_model(n_features, n_classes, dropout=0.5, weight_decay=0.01, **kwargs):
