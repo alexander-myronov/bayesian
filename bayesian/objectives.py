@@ -11,9 +11,27 @@ C - number of classes
 
 import numpy as np
 import keras.backend as K
-from theano.sandbox.rng_mrg import MRG_RandomStreams
 
-theano_rng = MRG_RandomStreams(42)
+
+def noise_var(pred, std, num_classes):
+    if K.backend() == 'tensorflow':
+        from tensorflow.contrib import distributions
+        dist_var = distributions.Normal(loc=K.zeros_like(std), scale=std)
+        return dist_var
+    elif K.backend() == 'theano':
+        from theano.sandbox.rng_mrg import MRG_RandomStreams
+        theano_rng = MRG_RandomStreams(42)
+        dist_var = theano_rng.normal(avg=0, std=K.tile(std, (num_classes, 1)).T, size=pred.shape)
+        return dist_var
+    raise NotImplementedError('noise_var: unknown backend %s' % K.backend())
+
+
+def noise_sample(dist_var, num_classes):
+    if K.backend() == 'tensorflow':
+        return K.transpose(dist_var.sample(num_classes))
+    elif K.backend() == 'theano':
+        pass  # already a random stream
+    raise NotImplementedError('noise_sample: unknown backend %s' % K.backend())
 
 
 def bayesian_categorical_crossentropy_original(T, num_classes):
@@ -47,11 +65,13 @@ def bayesian_categorical_crossentropy_original(T, num_classes):
         undistorted_loss = K.categorical_crossentropy(pred, true, from_logits=True)
         # shape: (T,)
         iterable = K.variable(np.ones(T))
-        dist = theano_rng.normal(avg=0, std=K.tile(std, (pred.shape[1], 1)).T, size=pred.shape)
+        # dist = K.random_normal(mean=0, stddev=K.tile(std, (num_classes, )), shape=pred.shape)
+        dist = noise_var(pred, std, num_classes)
         # distributions.Normal(loc=K.zeros_like(std), scale=std)
-        monte_carlo_results = K.map_fn(gaussian_categorical_crossentropy_original(true, pred, dist),
-                                       iterable,
-                                       name='monte_carlo_results')
+        monte_carlo_results = K.map_fn(gaussian_categorical_crossentropy_original(
+            true, pred, dist, num_classes),
+            iterable,
+            name='monte_carlo_results')
 
         variance_loss = K.mean(monte_carlo_results, axis=0)  # * undistorted_loss
 
@@ -61,7 +81,7 @@ def bayesian_categorical_crossentropy_original(T, num_classes):
     return bayesian_categorical_crossentropy_internal
 
 
-def gaussian_categorical_crossentropy_original(true, pred, dist):
+def gaussian_categorical_crossentropy_original(true, pred, dist, num_classes):
     """
     for a single monte carlo simulation,
     calculate categorical cross-entropy of
@@ -77,7 +97,7 @@ def gaussian_categorical_crossentropy_original(true, pred, dist):
     """
 
     def map_fn(i):
-        std_samples = dist  # K.transpose(dist.sample(num_classes))
+        std_samples = noise_sample(dist, num_classes)
         distorted_logits = pred + std_samples
         distorted_loss = -K.sum(distorted_logits * true, axis=1) + K.log(
             K.sum(K.exp(distorted_logits), axis=1))
@@ -121,7 +141,7 @@ def bayesian_categorical_crossentropy_elu(T, num_classes):
         undistorted_loss = K.categorical_crossentropy(pred, true, from_logits=True)
         # shape: (T,)
         iterable = K.variable(np.ones(T))
-        dist = theano_rng.normal(avg=0, std=K.tile(std, (pred.shape[1], 1)).T, size=pred.shape)
+        dist = noise_var(pred, std, num_classes)
         monte_carlo_results = K.map_fn(
             gaussian_categorical_crossentropy_elu(true, pred, dist, undistorted_loss, num_classes),
             iterable,
@@ -133,7 +153,7 @@ def bayesian_categorical_crossentropy_elu(T, num_classes):
     return bayesian_categorical_crossentropy_internal_elu
 
 
-def gaussian_categorical_crossentropy_elu(true, pred, dist, undistorted_loss):
+def gaussian_categorical_crossentropy_elu(true, pred, dist, undistorted_loss, num_classes):
     '''
     for a single monte carlo simulation, 
     calculate the elu of the difference between
@@ -149,7 +169,8 @@ def gaussian_categorical_crossentropy_elu(true, pred, dist, undistorted_loss):
     '''
 
     def map_fn(i):
-        distorted_loss = K.categorical_crossentropy(pred + dist, true, from_logits=True)
+        std_samples = noise_sample(dist, num_classes)
+        distorted_loss = K.categorical_crossentropy(pred + std_samples, true, from_logits=True)
         diff = undistorted_loss - distorted_loss
         return -K.elu(diff)
 

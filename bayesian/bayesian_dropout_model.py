@@ -48,10 +48,13 @@ class BayesianDropoutModel(Model):
         """
         if self._predict_stochastic is None:
             # self.validate()
-            self._predict_stochastic = K.function([self.inputs[self.num_input]],
-                                                  [self.outputs[self.num_output]],
-                                                  givens={K.learning_phase(): np.uint8(1)})
+            self._predict_stochastic = K.function([self.inputs[self.num_input], K.learning_phase()],
+                                                  [self.outputs[self.num_output]])
         if not isinstance(X, list):
             X = [X]
-        return self._predict_loop(self._predict_stochastic, X, batch_size=batch_size,
-                                  verbose=verbose)
+        X += [1.0]
+        # K.set_learning_phase(1)
+        result = self._predict_loop(self._predict_stochastic, X, batch_size=batch_size,
+                                    verbose=verbose)
+        # K.set_learning_phase(0)
+        return result
