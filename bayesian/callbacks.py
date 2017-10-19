@@ -4,12 +4,9 @@ import numpy as np
 from keras import backend as K
 from keras.callbacks import Callback
 
+from bayesian.bayesian_dropout_model import BayesianDropoutModel
+from bayesian.utils import monkeypatch_model_predict_stochastic
 
-def standardize_X(X):
-    if type(X) == list:
-        return X
-    else:
-        return [X]
 
 class ModelTest(Callback):
     ''' Test model at the end of every X epochs.
@@ -36,8 +33,9 @@ class ModelTest(Callback):
         - [Dropout: A simple way to prevent neural networks from overfitting](http://jmlr.org/papers/v15/srivastava14a.html)
         - [Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning](http://arxiv.org/abs/1506.02142)
     '''
+
     def __init__(self, Xt, Yt, T=10, test_every_X_epochs=1, batch_size=500, verbose=1,
-                 loss=None, mean_y_train=None, std_y_train=None):
+                 loss=None, num_output=None):
         super(ModelTest, self).__init__()
         self.Xt = Xt
         self.Yt = np.array(Yt)
@@ -46,46 +44,26 @@ class ModelTest(Callback):
         self.batch_size = batch_size
         self.verbose = verbose
         self.loss = loss
-        self.mean_y_train = mean_y_train
-        self.std_y_train = std_y_train
-        self._predict_stochastic = None
+        self.num_output = num_output
+        # self.mean_y_train = mean_y_train
+        # self.std_y_train = std_y_train
 
-    def predict_stochastic(self, X, batch_size=128, verbose=0):
-        """Generate output predictions for the input samples
-        batch by batch, using stochastic forward passes. If
-        dropout is used at training, during prediction network
-        units will be dropped at random as well. This procedure
-        can be used for MC dropout (see [ModelTest callbacks](callbacks.md)).
-
-        # Arguments
-            X: the input data, as a numpy array.
-            batch_size: integer.
-            verbose: verbosity mode, 0 or 1.
-
-        # Returns
-            A numpy array of predictions.
-
-        # References
-            - [Dropout: A simple way to prevent neural networks from overfitting](http://jmlr.org/papers/v15/srivastava14a.html)
-            - [Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning](http://arxiv.org/abs/1506.02142)
-        """
-        X = standardize_X(X)
-        if self._predict_stochastic is None: # we only get self.model after init
-            self._predict_stochastic = K.function([self.model.inputs[0]], [self.model.outputs[0]],
-                                                      givens={K.learning_phase(): np.uint8(1)})
-        return self.model._predict_loop(self._predict_stochastic, X, batch_size, verbose)
-
-
-    def on_epoch_begin(self, epoch, logs={}):
+    def on_epoch_end(self, epoch, logs=None):
         if epoch % self.test_every_X_epochs != 0:
             return
+        monkeypatch_model_predict_stochastic(self.model)
         model_output = self.model.predict(self.Xt, batch_size=self.batch_size,
                                           verbose=self.verbose)
+        if self.num_output is not None and isinstance(model_output, list):
+            model_output = model_output[self.num_output]
         MC_model_output = []
         for _ in range(self.T):
-            MC_model_output += [self.predict_stochastic(self.Xt,
-                                                   batch_size=self.batch_size,
-                                                   verbose=self.verbose)]
+            out = self.model.predict_stochastic(self.Xt,
+                                                batch_size=self.batch_size,
+                                                verbose=self.verbose)
+            if self.num_output is not None and isinstance(out, list):
+                out = out[self.num_output]
+            MC_model_output += [out]
         MC_model_output = np.array(MC_model_output)
         MC_model_output_mean = np.mean(MC_model_output, 0)
 
@@ -100,13 +78,11 @@ class ModelTest(Callback):
             print("Standard accuracy at epoch %05d: %0.5f" % (epoch, float(standard_acc)))
             print("MC accuracy at epoch %05d: %0.5f" % (epoch, float(MC_acc)))
         elif self.loss == 'euclidean':
-            model_output = model_output * self.std_y_train + self.mean_y_train
-            standard_err = np.mean((self.Yt - model_output)**2.0, 0)**0.5
-            MC_model_output_mean = MC_model_output_mean * self.std_y_train + self.mean_y_train
-            MC_err = np.mean((self.Yt - MC_model_output_mean)**2.0, 0)**0.5
+            # model_output = model_output * self.std_y_train + self.mean_y_train
+            standard_err = np.mean((self.Yt - model_output) ** 2.0, 0) ** 0.5
+            # MC_model_output_mean = MC_model_output_mean * self.std_y_train + self.mean_y_train
+            MC_err = np.mean((self.Yt - MC_model_output_mean) ** 2.0, 0) ** 0.5
             print("Standard error at epoch %05d: %0.5f" % (epoch, float(standard_err)))
             print("MC error at epoch %05d: %0.5f" % (epoch, float(MC_err)))
         else:
             raise Exception('No loss: ' + self.loss)
-
-

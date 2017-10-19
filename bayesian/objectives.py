@@ -30,7 +30,7 @@ def noise_sample(dist_var, num_classes):
     if K.backend() == 'tensorflow':
         return K.transpose(dist_var.sample(num_classes))
     elif K.backend() == 'theano':
-        pass  # already a random stream
+        return dist_var
     raise NotImplementedError('noise_sample: unknown backend %s' % K.backend())
 
 
