@@ -18,7 +18,7 @@ This is a repository for educational resources, examples, and utils related to B
 ## callbacks.py
 
 ModelTest is is a validation callback, can be used as a callback to Keras fit function to compare MC dropout predictions accuracy with regular predictions.
-Can be used on a regular Keras model, but monkey-patches it to have `predict_stochastic method` (from BayesianDropoutModel)
+Can be used on a regular Keras model, but monkey-patches it to have `predict_stochastic` method (from BayesianDropoutModel)
 Usage shown in `python src/examples/callback.py`
 
 ## metrics.py
