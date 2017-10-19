@@ -5,6 +5,6 @@ setup(name='bayesian',
       description='A collection of utils and examples on Bayesian learning',
       author='Oleksandr Myronov',
       author_email='oleksandr.myronov@ardigen.com',
-      packages=['bayesian'],
+      packages=['src/bayesian'],
       install_requires=['keras', 'numpy', 'scipy'],
       zip_safe=False)
