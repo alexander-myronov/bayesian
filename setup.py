@@ -7,4 +7,6 @@ setup(name='bayesian',
       author_email='oleksandr.myronov@ardigen.com',
       packages=['src/bayesian'],
       install_requires=['keras', 'numpy', 'scipy'],
+      setup_requires=['pytest-runner'],
+      tests_require=['pytest'],
       zip_safe=False)
