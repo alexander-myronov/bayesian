@@ -2,7 +2,7 @@
 
 # Requirements
 
--  python 3
+-  python >= 3.5
 -  numpy >= 1.11
 -  scipy >= 0.19
 -  keras >= 2
@@ -50,7 +50,7 @@ Usage shown in scripts and notebooks in `python src/examples/`
 
 # Examples
 
-*Hint: every example has a built it help, type `python examples/*.py -h`.*
+*Hint: every example has a built it help, type `python examples/<script>.py -h`.*
 *Note that examples should be run as submodules, because the imported code is in `bayesian` directory*
 
 -  `python3 -m src.examples.callback --epochs=100 -T=50 -v` univariate regression with epistemic uncertainty using MC dropout
