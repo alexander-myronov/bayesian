@@ -1,5 +1,17 @@
 This is a repository for educational resources, examples, and utils related to Bayesian machine learning. 
 
+# Requirements
+
+-  python 3
+-  numpy >= 1.11
+-  scipy >= 0.19
+-  keras >= 2
+-  pytest and pytest_runner for tests
+
+
+# Installation
+
+`pip install git+ssh://git@192.168.0.235:10022/ml_library/bayesian.git`
 
 # Structure
 -  `docs/bayesian-resources.ipynb`:  a Jupyter notebook with publications, tutorials and blog posts on Bayesian learning
